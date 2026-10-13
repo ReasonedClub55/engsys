@@ -70,6 +70,23 @@ node /path/to/engsys/install verify  --into .
 The installer is **zero-dependency** Node (≥20.11) — it adds nothing to your
 project's dependency tree and runs the same on macOS, Windows, and Linux.
 
+## Lite profile (limited Claude plan)
+
+The full system is generous with agents: most personas run on Opus, `/generate-project`
+fans out to six of them plus a sanity check, and `/implement-project` loops phase after
+phase with a second reviewer on each. If that burns through your plan, install the
+**lite** profile instead — one line in the config:
+
+```bash
+engsys init --profile lite      # or add `profile: lite` to an existing engsys.config.yaml, then `update`
+```
+
+Six Sonnet-only agents, specialist review as an inline `lenses` skill rather than agent
+fan-out, single-pass commands that stop after one phase, and a leaner `CLAUDE.md`.
+`full` stays the default and is unchanged, so you can use either per project. What it
+changes, what you give up, and the knobs: [`docs/lite-profile.md`](docs/lite-profile.md);
+compare real installs with `node scripts/footprint.mjs`.
+
 ## Worker providers (optional): Codex, DeepSeek, Grok
 
 engsys can dispatch **implement / review / critique / investigate** work to
@@ -200,6 +217,7 @@ stacks/             detachable capability packs — pick per project (scalar or 
   domain/           mobile-growth
   tooling/          issue-tracker-github · issue-tracker-linear
 
+profiles/lite/      the low-usage profile: its own agents, commands, skills, CLAUDE.md template
 optional-agents/    opt-in: sandy (marketing), jos (monetization), steve (morale)
 lessons-library/    curated cross-project lessons (seeded into projects on install)
 docs/               architecture · naturalization

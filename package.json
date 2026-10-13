@@ -9,6 +9,7 @@
     "install",
     "lib/",
     "core/",
+    "profiles/",
     "optional-agents/",
     "stacks/",
     "lessons-library/",

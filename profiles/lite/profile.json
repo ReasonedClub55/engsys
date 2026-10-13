@@ -1,0 +1,12 @@
+{
+  "name": "lite",
+  "description": "Low-usage profile for limited Claude plans: Sonnet-only roster, single-pass commands, inline review lenses instead of agent fan-out, no orchestration loops.",
+  "inherit": {
+    "commands": ["pre-push", "naturalize"],
+    "skills": ["code-review", "git-commit", "pre-push", "webapp-testing", "chrome-devtools"],
+    "workflows_if_providers": ["worker-dispatch.md", "briefs/"]
+  },
+  "settings": {
+    "model": "sonnet"
+  }
+}
