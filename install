@@ -13,6 +13,7 @@ const path = require('path');
 const fs = require('fs');
 const { runInstall, runUninstall, runVerify, runEnableProviders, ENGSYS_VERSION } = require('./lib/commands');
 const { exists } = require('./lib/util');
+const { listProfiles } = require('./lib/profile');
 
 const engsysRoot = __dirname;
 
@@ -24,6 +25,7 @@ function parseArgs(argv) {
     else if (a === '--force') args.force = true;
     else if (a === '--into') args.into = argv[++i];
     else if (a === '--config') args.config = argv[++i];
+    else if (a === '--profile') args.profile = argv[++i];
     else if (a === '--help' || a === '-h') args.help = true;
     else args._.push(a);
   }
@@ -36,10 +38,11 @@ Bring the engineering system into a project, faithfully — adopting whatever is
 already there (existing CLAUDE.md, settings, agents, or Copilot/Cursor config).
 
 Commands:
-  init [--into <path>] [--force]
+  init [--into <path>] [--profile full|lite] [--force]
       Scaffold engsys.config.yaml in <path> (default: current dir) from the
       bundled example. Handy after \`npm install -g engsys\`, where you don't
       have the repo's example file to copy. Edit it, then run \`install\`.
+      --profile lite scaffolds the low-usage profile (docs/lite-profile.md).
   install --into <path> [--config <file>] [--dry-run] [--force]
       First-time materialization. Adopts existing infra: backs up a foreign
       CLAUDE.md (folding it into project facts), merges settings/.mcp.json,
@@ -147,7 +150,15 @@ function main() {
     const into = path.resolve(args.into || '.');
     if (!exists(into)) { console.error(`error: target does not exist: ${into}`); process.exit(1); }
     const dest    = path.join(into, 'engsys.config.yaml');
-    const example = path.join(engsysRoot, 'engsys.config.example.yaml');
+    const profile = args.profile || 'full';
+    const available = ['full', ...listProfiles(engsysRoot)];
+    if (!available.includes(profile)) {
+      console.error(`error: unknown profile '${profile}' — available: ${available.join(', ')}`);
+      process.exit(1);
+    }
+    const example = profile === 'full'
+      ? path.join(engsysRoot, 'engsys.config.example.yaml')
+      : path.join(engsysRoot, 'profiles', profile, 'engsys.config.example.yaml');
     if (!exists(example)) { console.error(`error: bundled example not found: ${example}`); process.exit(1); }
     if (exists(dest) && !args.force) {
       console.error(`error: ${path.relative(into, dest) || dest} already exists (use --force to overwrite).`);
@@ -161,11 +172,24 @@ function main() {
     process.exit(0);
   }
 
+  if (args.profile && cmd !== 'init') {
+    // The config is the single source of truth; a flag that silently loses to
+    // it would install something other than what was asked for.
+    console.error(`error: --profile only applies to \`init\`. For ${cmd}, set \`profile: ${args.profile}\` in engsys.config.yaml.`);
+    process.exit(1);
+  }
+
   if (cmd === 'install' || cmd === 'update') {
     if (!args.into) { console.error('error: --into <path> is required'); process.exit(1); }
     const into = path.resolve(args.into);
     if (!exists(into)) { console.error(`error: target does not exist: ${into}`); process.exit(1); }
-    const result = runInstall({ engsysRoot, into, config: args.config, dryRun: args.dryRun, force: args.force, mode: cmd });
+    let result;
+    try {
+      result = runInstall({ engsysRoot, into, config: args.config, dryRun: args.dryRun, force: args.force, mode: cmd });
+    } catch (e) {
+      console.error(`error: ${e.message}`);
+      process.exit(1);
+    }
     const tag = args.dryRun ? ' (dry run — nothing written)' : '';
     console.log(`engsys ${result.mode}${tag} → ${into}`);
     console.log(`config: ${path.relative(into, result.configPath) || result.configPath}`);

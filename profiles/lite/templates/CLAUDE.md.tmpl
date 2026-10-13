@@ -1,0 +1,70 @@
+# {{PROJECT_NAME}} — Claude Code working notes
+
+{{PROJECT_DESCRIPTION}}
+
+Loaded into every session in this repo: keep it tight, link out to `docs/` for depth.
+
+## Usage discipline (lite profile)
+
+This repo is set up for a limited Claude plan. Take the cheapest path that is still correct:
+
+- **Work inline.** Spawn a subagent only for isolated, high-volume work (implementing an issue, a diff-wide security pass). Never run subagents in parallel unless asked. Specialist review = the `lenses` skill, not an agent.
+- **Search before reading.** grep/glob first, read only the lines you need. No whole-directory or generated-file reads; don't re-read what is already in context; don't re-run a passing check.
+- **Stop on repeat failure.** Same error twice → stop and report what you tried. No retry loops.
+- **One review pass**, not a loop. Fix Critical; note the rest.
+- **Short outputs.** Don't recap what the diff already shows.
+- Suggest `/clear` between unrelated tasks and `/compact` when context gets long.
+- Sonnet is the default (`.claude/settings.json`). Use Opus only when I explicitly ask.
+{{MODEL_STRATEGY}}
+
+## Communication
+
+- Factual tone: "changes applied" / "ready for testing", not "fixed!". Ship ≠ verified until I confirm end-to-end.
+- Push back on weak assumptions rather than agreeing politely.
+- No PII in logs; never log tokens, cookies, emails, IPs, or auth headers.
+
+{{PROVIDER_SECTION}}
+
+{{STACK_FRAGMENTS}}
+
+## Git / PR conventions
+
+- **Never** push to `main`; work goes through PRs, opened as **draft** (`gh pr create --draft`). Branches: `agent/<n>-<slug>` (issue) or `agent/project-<n>-phase-<p>-<slug>` (phase).
+- Commits: `type(scope): subject (#issue)` — `feat|fix|chore|docs|test|refactor|style|perf|build|ci|revert`. One commit per issue.
+- PR closes: **one `Closes #N` per line** (a comma list only closes the first).
+- Stacked branches: rebase on `origin/main`, then `git push --force-with-lease`; never `--force`.
+- Commit/PR/issue bodies go in files under `tmp/` (Write tool) → `--body-file`/`-F`. **No heredocs.**
+- Commit and push only when asked (the `/implement-*` commands count as asking). End commits with the `Co-Authored-By: Claude` trailer.
+
+## Review and issues
+
+- Review locally **before push** with the built-in `/code-review` (see `.claude/skills/code-review/SKILL.md`); `/security-review` for a deeper security pass.
+- File issues after investigating root cause: body in `tmp/issue-body-<slug>.md`, create via the issue-tracker skill (`/file-issue`). Typos and one-liners: just fix.
+- Tool order: `gh` CLI → `github` MCP (if `gh` fails) → manual. ProjectV2 boards need `gh project` / `gh api graphql`.
+
+## MCP servers
+
+{{MCP_SERVERS}}
+
+Project-scoped config lives in [`.mcp.json`](.mcp.json). Approve each server on first startup.
+
+## Slash commands
+
+{{COMMANDS_LIST}}
+
+A `PostToolUse` hook (`.claude/hooks/post-edit-reminders.sh`, wired in `.claude/settings.json`) nudges after edits to sensitive files.
+
+## Lessons
+
+{{LESSONS_NOTE}}
+
+<!--
+  ENGSYS:PROJECT-FACTS region.
+  The installer (and/or the model during init) fills the block below with project-specific
+  facts: stack details, service names, conventions, key paths, north star, etc.
+  `engsys update` regenerates everything OUTSIDE this region but NEVER overwrites what's
+  between the START and END markers. Hand-edit freely inside it.
+-->
+<!-- ENGSYS:PROJECT-FACTS:START -->
+{{PROJECT_FACTS}}
+<!-- ENGSYS:PROJECT-FACTS:END -->
